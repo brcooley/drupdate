@@ -1,13 +1,21 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-'''
-DrupalUpdate
-brcooley
+''' drupdate is a one-step drupal updater
+	Copyright (C) 2011  Brett Cooley
 
-Account strings currently are not implemented
-Automatic version finding not implemented
-'''
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>. '''
 
 import logging as log
 '''
@@ -19,30 +27,28 @@ import logging as log
 	-- CRITICAL: Error causing program abort
 '''
 
-import sys, re, time, ftplib, json, urllib.request, os
+import sys, re, time, ftplib, json, os, shutil
 from getpass import *
 from optparse import *
 from netrc import *
 from subprocess import *
 
-LOG_FILE = time.strftime('%Y-%m-%d.log')
+LOG_FILE = time.strftime('.%Y-%m-%d.log')
 CONFIG_FILE = '.duConfig.conf'
-PROG_TITLE = 'DrupalUpdate'
-VERSION = '0.3a'
-PROD = False
+PROG_TITLE = 'drupdate'
+VERSION = '0.5a'
 
 DEF_CONFIG = {
 		'DirectoriesToSave' : '', 
 		'FilesToSave' : '', 
-		'Verbose' : '',
 		'DrupalBaseDir' : 'www',
 		'DrupalVersion' : '7.8'
 	}
 
 ftpConn = None
 verbose = True
-i = 0
-x = 0
+testrun = True
+i = j = 0
 
 
 '''  Collects host, username, password, and optional account information  '''
@@ -78,57 +84,56 @@ def collectLogin(mainArg, userN='', pw='', acct=''):
 			else:
 				printAndLog('Echoed password input aborted by user, {} exiting'.format(PROG_TITLE),log.INFO,True)
 				sys.exit(3)
-				
 	log.debug(userN)
-	log.debug(pw)
 	return (remoteSvr.strip(), userN.strip(), pw.strip(), acct.strip())
 
 
 '''  Recursive function which deletes entire directory trees  '''
 def deleteDir(rootDir):
-	global ftpConn, x
-	if PROD == False:
+	global ftpConn, j
+	if testrun:
 		global i
 		i += 1
 	ftpConn.cwd(rootDir)
 	fList = ftpConn.nlst()
 	for f in fList:
 		if re.search(r'.*\..+',f) and f != '..':
-			if PROD == True:
+			if testrun == False:
 				ftpConn.delete(f)
+				if j % 4 == 3:
+					sprint('\b\b| ', end='')
+				elif j % 4 == 2:
+					sprint('\b\b\\ ',end='')
+				elif j % 4 == 1:
+					sprint('\b\b- ', end='')
+				else:
+					sprint('\b\b/ ', end='')
+				j += 1
+				sys.stdout.flush()
 			else:
-				#print('-'*i,end='')
-				#print('Deleting {}'.format(f))
-				pass
+				sprint('-'*i,end='')
+				sprint('Deleting {}'.format(f))
 		elif f != '..' and f != '.':
 			deleteDir(f)
+		
 	ftpConn.cwd('..')
-	if PROD == True:
+	if testrun == False:
 		ftpConn.rmd(rootDir)
 	else:
-		#print('='*i,end='')
-		#print('Removing {}'.format(rootDir))
-		i -= 1
-	if x % 4 == 3:
-		print('   \b\b\b',end='')
-	elif x % 4 == 2:
-		print('.\b\b\b',end='')
-	else:
-		print('.',end='')
-	x += 1
-	sys.stdout.flush()
+		sprint('='*i,end='')
+		sprint('Removing {}'.format(rootDir))
+		i -= 1	
 	return
 
 
 '''  Recursive function which uploads entire directory trees  '''
 def uploadDir(rootDir):
-	global ftpConn
-	j = 0
-	if PROD == False:
+	global ftpConn, j
+	if testrun:
 		global i
 		i += 1
-		#print('='*i,end='')
-		#print('Creating {}'.format(rootDir))
+		sprint('='*i,end='')
+		sprint('Creating {}'.format(rootDir))
 	else:
 		ftpConn.mkd(rootDir)
 		ftpConn.cwd(rootDir)
@@ -136,39 +141,35 @@ def uploadDir(rootDir):
 	fList = os.listdir(os.getcwd())
 	for f in fList:
 		if re.search(r'.*\..+',f) and f != '..':
-			if PROD == True:
-				openF = open(f,'r')
+			if testrun == False:
+				openF = open(f,'rb') #TODO need a try/except here
 				ftpConn.storbinary('STOR {}'.format(f),openF)
+				if j % 4 == 3:
+					sprint('\b\b| ', end='')
+				elif j % 4 == 2:
+					sprint('\b\b\\ ',end='')
+				elif j % 4 == 1:
+					sprint('\b\b- ', end='')
+				else:
+					sprint('\b\b/ ', end='')
+				j += 1
+				sys.stdout.flush()
 			else:
-				#print('-'*i,end='')
-				#print('Uploading {}'.format(f))
-				pass
+				sprint('-'*i,end='')
+				sprint('Uploading {}'.format(f))
 		elif f != '..' and f != '.':
 			uploadDir(f)
+			
 	ftpConn.cwd('..')
 	os.chdir('..')
-	if PROD == False:
+	if testrun:
 		i -= 1
-	if j % 4 == 3:
-		print('\b|',end='')
-	elif j % 4 == 2:
-		print('\b\\',end='')
-	elif j % 4 == 1:
-		print('\b-',end='')
-	else:
-		print('\b/',end='')
-	j += 1
-	sys.stdout.flush()
-	return
-
-
-'''  Currently unimplemented, will serve as the ftp prompt for a general ftp session  '''
-def ftpPrompt():
 	return
 
 
 def main():
 	global ftpConn, verbose
+	#TODO fix logging to respect debug flag
 	log.basicConfig(filename=LOG_FILE,level=log.INFO)
 	log.info('Logging started')
 	try:
@@ -182,29 +183,35 @@ def main():
 			printAndLog('Unconfigured script aborted by user, {} exiting'.format(PROG_TITLE),log.INFO,True)
 			sys.exit(4)
 	
-	''' Options --account, -A currently do not work  '''
+	''' Options --account, -A, currently do not work  '''
 	parser = OptionParser(description=DESC, prog=PROG_TITLE, version='{} version {}'.format(PROG_TITLE, VERSION), 
 						  usage='drupalUpdate.py [options] host')
-	parser.add_option('-V','--ver', help="Specify the version of drupal to get, like 'X.y'", metavar='VER')
+	parser.add_option('-v','--ver', help="Specify the version of drupal to get, like 'X.y'", metavar='VER')
 	parser.add_option('-u','--user', help='Specify a username to login to a host with')
 	parser.add_option('-p','--password', help='Password to use with login', metavar='PASS')
 	parser.add_option('--account', help='Specify an account to use with login', metavar='ACCT')
-	parser.add_option('-A','--auto', action='store_true', 
-					  help='Tells the updater to automatically find the latest version of Drupal'.format(PROG_TITLE))
+	parser.add_option('-k','--keep', action='store_true', default=False, help='Keeps both the local Drupal directory and the .tar')
 	parser.add_option('-n','--no-get',action='store_true', default=False, help='Stops the script from downloading and unpacking Drupal')
 	parser.add_option('-q','--quiet',action='store_true', default=False, help='Silences output')
-	parser.add_option('-d','--debug', action='store_true', default=False, 
-					  help='Turns on debugging (WARNING: This will log sensitive information, such as passwords)')
+	parser.add_option('-t','--testrun', action='store_true', default=False, 
+					  help="Same as a normal run, except files aren't acutually changed.  A detailed log of operations is printed to stdout")
+	#parser.add_option('-d','--debug', action='store_true', default=False, 
+	#				  help='Turns on debugging (WARNING: This will log private information, such as usernames)')
+	#parser.add_option('-A','--auto', action='store_true', 
+	#				  help='Tells the updater to automatically find the latest version of Drupal'.format(PROG_TITLE))
 	options, reqArgs = parser.parse_args()
 
 	if len(reqArgs) < 1:
 		parser.print_help()
 		sys.exit(2)
 
-	if options.quiet == True:
+	if options.quiet:
 		verbose = False
-	if options.debug:
-		log.basicConfig(level=log.DEBUG)
+	if options.testrun:
+		testrun = True
+	#if options.debug:
+	#	log.basicConfig(filename=LOG_FILE,level=log.DEBUG)
+	#	log.debug('Debugging on')
 	if options.ver != None:
 		drupalVer = options.ver.split('.')
 	else:
@@ -244,13 +251,11 @@ def main():
 		passAcct = options.account
 	
 	remoteSvr, userN, pw, acct = collectLogin(reqArgs,passUser,passPass,passAcct)
-	
+
 	ftpConn = ftplib.FTP()
-	#ftpConn.set_debuglevel(1)
 	try:
 		ftpConn.connect(remoteSvr)
 		log.info('Connection made to {}'.format(remoteSvr))
-		ftpConn.getwelcome()
 		ftpConn.login(userN,pw,acct)
 	except ftplib.all_errors:		#TODO break out, create fixes for each error
 		printAndLog('Something went wrong...',log.CRITICAL,True,sys.stderr)
@@ -263,7 +268,7 @@ def main():
 	curWD = ftpConn.pwd()
 	
 	### STATUS
-	print('Removing files',end='')
+	sprint('Removing files --   ',end='')
 	sys.stdout.flush()
 	###
 	
@@ -271,15 +276,13 @@ def main():
 		#r'.*\..*'
 		#r'.*\.d.*'  #TODO Need to find re that will allow finding of '.d' directories too
 		if not(re.search(r'.*\..*',dir)) and dir not in configDict['DirectoriesToSave']:
-			#print('{} to be deleted from {}'.format(dir,curWD))
 			deleteDir(dir)
-		elif dir not in configDict['FilesToSave'] and dir not in ['.','..']:
-			if PROD == True:
+		elif dir not in configDict['FilesToSave'] and dir not in ['.','..'] and dir not in configDict['DirectoriesToSave']:
+			if testrun == False:
 				ftpConn.delete(dir)
 			else:
-				#print('Deleting {}'.format(dir))
-				pass
-	print('')
+				sprint('Deleting {}'.format(dir))
+	sprint('')
 	
 	### STATUS
 	printAndLog("Removal complete, starting upload",log.INFO)
@@ -288,30 +291,36 @@ def main():
 	os.chdir('drupal-{}.{}'.format(drupalVer[0],drupalVer[1]))
 	
 	### STATUS
-	print("Uploading files",end='')
+	sprint("Uploading files --   ",end='')
 	###
 	
 	for f in os.listdir(os.getcwd()):
 		if not(re.search(r'.*\..*',f)) and f not in configDict['DirectoriesToSave']:
 			uploadDir(f) 
-		elif f not in configDict['FilesToSave'] and f not in ['.','..']:
-			if PROD == True:
-				openF = open(f,'r')
+		elif f not in configDict['FilesToSave'] and f not in ['.','..'] and f not in configDict['DirectoriesToSave']:
+			if testrun == False:
+				openF = open(f,'rb')
+				log.debug('Storing {}'.format(f))
 				ftpConn.storbinary('STOR {}'.format(f),openF)
 			else:
-				#print('Uploading {}'.format(f))
-				pass
-	print('')
+				sprint('Uploading {}'.format(f))
+	sprint('')
 	
 	### STATUS
-	print('Drupal successfuly updated to {}.{}'.format(drupalVer[0],drupalVer[1]))
+	sprint('Drupal successfuly updated to {}.{}'.format(drupalVer[0],drupalVer[1]))
 	###
+	
+	if options.keep == False:
+		os.chdir('..')
+		shutil.rmtree('drupal-{}.{}'.format(drupalVer[0],drupalVer[1]),True)
+		os.unlink('drupal-{}.{}.tar.gz'.format(drupalVer[0],drupalVer[1]))
 	
 	try:
 		ftpConn.quit()
 	except ftplib.all_errors:
 		ftpConn.close()
 	log.info('Connection to {} closed'.format(remoteSvr))
+	log.shutdown()
 
 
 '''  A simple method which prints and logs the same message  '''
@@ -320,6 +329,10 @@ def printAndLog(message, level=log.DEBUG, verbOverride=False, printStream=sys.st
 	if verbose or verbOverride:
 		print(message, file=printStream)
 
+''' Simple wrapper to print method that respects verbose option  '''
+def sprint(message,sep=' ',end='\n',file=sys.stdout):
+	if verbose:
+		print(message,sep=sep,end=end,file=file)
 
 DESC = '''
     A simple python script which automatically removes and replaces a 'typical' Drupal install on a
