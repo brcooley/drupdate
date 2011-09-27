@@ -36,7 +36,7 @@ from subprocess import *
 LOG_FILE = time.strftime('.%Y-%m-%d.log')
 CONFIG_FILE = '.duConfig.conf'
 PROG_TITLE = 'drupdate'
-VERSION = '0.5a'
+VERSION = '0.5.1a'
 
 DEF_CONFIG = {
 		'DirectoriesToSave' : '', 
@@ -47,7 +47,7 @@ DEF_CONFIG = {
 
 ftpConn = None
 verbose = True
-testrun = True
+testrun = False
 i = j = 0
 
 
@@ -90,7 +90,7 @@ def collectLogin(mainArg, userN='', pw='', acct=''):
 
 '''  Recursive function which deletes entire directory trees  '''
 def deleteDir(rootDir):
-	global ftpConn, j
+	global ftpConn, j, testrun
 	if testrun:
 		global i
 		i += 1
@@ -128,7 +128,7 @@ def deleteDir(rootDir):
 
 '''  Recursive function which uploads entire directory trees  '''
 def uploadDir(rootDir):
-	global ftpConn, j
+	global ftpConn, j, testrun
 	if testrun:
 		global i
 		i += 1
@@ -168,7 +168,7 @@ def uploadDir(rootDir):
 
 
 def main():
-	global ftpConn, verbose
+	global ftpConn, verbose, testrun
 	#TODO fix logging to respect debug flag
 	log.basicConfig(filename=LOG_FILE,level=log.INFO)
 	log.info('Logging started')

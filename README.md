@@ -4,7 +4,7 @@ drupdate is a python script which allows for complete update to a [Drupal](http:
 
 ## Status ##
 
-Currently, the source is messy, full of debugging code, and untested.  _However_, minimal testing has been done, and multiple sites have been sucessfully updated.  Use at your own risk, and I would recommend running on a test server before you touch your production site.
+Currently, the source is messy and full of debugging code.  _However_, minimal testing has been done, and multiple sites have been sucessfully updated.  Use at your own risk, and I would recommend running on a test server before you touch your production site.
 
 #### Features ####
 
