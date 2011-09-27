@@ -1,4 +1,4 @@
-# drupdate #
+# drupdate v0.5.1a#
 
 drupdate is a python script which allows for complete update to a [Drupal](http://www.drupal.org) installation on a remote server.  It can also perform a fresh install of the latest version of Drupal.  It was desiged to be used on shared hosts, where ssh access isn't allowed, but it should work for any setup.
 
