@@ -27,7 +27,7 @@ import logging as log
 	-- CRITICAL: Error causing program abort
 '''
 
-import sys, re, time, ftplib, json, os, shutil
+import sys, re, time, ftplib, json, os, shutil, stat
 from getpass import *
 from optparse import *
 from netrc import *
@@ -40,15 +40,17 @@ VERSION = '0.5.1a'
 
 DEF_CONFIG = {
 		'DirectoriesToSave' : '', 
-		'FilesToSave' : '', 
-		'DrupalBaseDir' : 'www',
-		'DrupalVersion' : '7.8'
+		'FilesToSave' 		: '', 
+		'DrupalBaseDir' 	: 'public_html',
+		'DrupalVersion' 	: '7.8',
+		'MLSDSupport'		: 'True'
 	}
 
 ftpConn = None
 verbose = True
 testrun = False
 i = j = 0
+dirList = []
 
 
 '''  Collects host, username, password, and optional account information  '''
@@ -61,7 +63,7 @@ def collectLogin(mainArg, userN='', pw='', acct=''):
 			userN = upBundle
 	else:
 		remoteSvr = mainArg[0]
-	
+
 	log.debug(sys.platform)
 	if sys.platform == 'linux2':
 		try:
@@ -167,6 +169,32 @@ def uploadDir(rootDir):
 	return
 
 
+def debugHook(ftpConn):
+	#ftpConn.retrlines('MLSD',mlsdFilter)
+	ftpConn.retrlines('LIST',dirFilter)
+	print(dirList)
+	curDirList = os.listdir(os.getcwd())
+	for item in curDirList:
+		fileStat = os.stat(item)
+		if stat.S_ISDIR(fileStat.st_mode):
+			print('{}: {}'.format(item,fileStat.st_mode))
+
+
+''' Callback function for retrlines call that finds directories and appends them to the global dirList '''
+def mlsdFilter(fileInfo):
+	global dirList
+	if re.search(r'type=dir;',fileInfo):
+		dirList.append(fileInfo.split(';')[7].strip())
+
+
+''' Callback function for retrlines call that finds directories and appends them to the global dirList '''
+def dirFilter(fileInfo):
+	global dirList
+	if re.match(r'^d',fileInfo) and fileInfo.split()[8].strip() not in ['.','..']:
+		dirList.append(fileInfo.split()[8].strip())
+
+
+
 def main():
 	global ftpConn, verbose, testrun
 	#TODO fix logging to respect debug flag
@@ -195,6 +223,7 @@ def main():
 	parser.add_option('-q','--quiet',action='store_true', default=False, help='Silences output')
 	parser.add_option('-t','--testrun', action='store_true', default=False, 
 					  help="Same as a normal run, except files aren't acutually changed.  A detailed log of operations is printed to stdout")
+	parser.add_option('-D','--debug', action='store_true', help='For debugging')
 	#parser.add_option('-d','--debug', action='store_true', default=False, 
 	#				  help='Turns on debugging (WARNING: This will log private information, such as usernames)')
 	#parser.add_option('-A','--auto', action='store_true', 
@@ -264,24 +293,31 @@ def main():
 	ftpConn.cwd(configDict['DrupalBaseDir'])
 	log.debug('Current dir: {}'.format(ftpConn.pwd()))
 	curFileList = ftpConn.nlst()
+	if configDict['MLSDSupport']:
+		ftpConn.retrlines('MLSD',mlsdFilter)
+	else:
+		ftpConn.retrlines('LIST',dirFilter)
 	log.debug('Current dir listing:\n{}'.format(curFileList))
 	curWD = ftpConn.pwd()
-	
+	#-#
+	if options.debug:
+		debugHook(ftpConn)
+		sys.exit(0)
+	#-#
 	### STATUS
 	sprint('Removing files --   ',end='')
 	sys.stdout.flush()
 	###
 	
-	for dir in curFileList:
-		#r'.*\..*'
-		#r'.*\.d.*'  #TODO Need to find re that will allow finding of '.d' directories too
-		if not(re.search(r'.*\..*',dir)) and dir not in configDict['DirectoriesToSave']:
-			deleteDir(dir)
-		elif dir not in configDict['FilesToSave'] and dir not in ['.','..'] and dir not in configDict['DirectoriesToSave']:
-			if testrun == False:
-				ftpConn.delete(dir)
+	for item in curFileList:
+		if item not in configDict['DirectoriesToSave'] and item not in configDict['FilesToSave'] and item not in ['.','..']:
+			if item in dirList:
+				deleteDir(item)
 			else:
-				sprint('Deleting {}'.format(dir))
+				if testrun == False:
+					ftpConn.delete(item)
+				else:
+					sprint('Deleting {}'.format(item))
 	sprint('')
 	
 	### STATUS
@@ -294,16 +330,17 @@ def main():
 	sprint("Uploading files --   ",end='')
 	###
 	
-	for f in os.listdir(os.getcwd()):
-		if not(re.search(r'.*\..*',f)) and f not in configDict['DirectoriesToSave']:
-			uploadDir(f) 
-		elif f not in configDict['FilesToSave'] and f not in ['.','..'] and f not in configDict['DirectoriesToSave']:
-			if testrun == False:
-				openF = open(f,'rb')
-				log.debug('Storing {}'.format(f))
-				ftpConn.storbinary('STOR {}'.format(f),openF)
+	for item in os.listdir(os.getcwd()):
+		if item not in configDict['DirectoriesToSave'] and item not in configDict['FilesToSave'] and item not in ['.','..']:
+			if stat.S_ISDIR(os.stat(item)):
+				uploadDir(item) 
 			else:
-				sprint('Uploading {}'.format(f))
+				if testrun == False:
+					openF = open(item,'rb')
+					log.debug('Storing {}'.format(item))
+					ftpConn.storbinary('STOR {}'.format(item),openF)
+				else:
+					sprint('Uploading {}'.format(item))
 	sprint('')
 	
 	### STATUS
