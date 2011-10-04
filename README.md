@@ -1,4 +1,4 @@
-# drupdate v0.5.1a#
+# drupdate v0.6a#
 
 drupdate is a python script which allows for complete update to a [Drupal](http://www.drupal.org) installation on a remote server.  It can also perform a fresh install of the latest version of Drupal.  It was desiged to be used on shared hosts, where ssh access isn't allowed, but it should work for any setup.
 
@@ -14,7 +14,6 @@ Currently, the source is messy and full of debugging code.  _However_, minimal t
 
 #### Limitations ####
 
-+ Any directories which include a dot '.' in them are treated as files, and will break the update script.  This will be fixed in 0.6
 + drupdate is designed with simplicity in mind.  Therefore, it does not do all of the recommended steps when updating Drupal, namely putting the site into maintainace mode and backing up the mySQL database.  Please complete these steps manually if they are important to you.
 + drupdate only uses one FTP connection.  This means it might seem slower than other FTP clients.  However, this also guarentees that drupdate will never open too many connections to your remote server, thus timing out (something other FTP clients _also_ do)
 

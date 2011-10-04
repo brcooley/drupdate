@@ -2,3 +2,4 @@
 *.gz
 drupal-*
 *.sublime*
+drupalUpdateTest.py

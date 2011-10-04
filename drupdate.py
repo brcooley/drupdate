@@ -180,19 +180,6 @@ def uploadDir(rootDir):
 	return
 
 
-def debugHook(ftpConn):
-	localList = []
-	dirFilter = listFilter(localList)
-	#ftpConn.retrlines('MLSD',dirFilter)
-	ftpConn.retrlines('LIST',dirFilter)
-	print(localList)
-	curDirList = os.listdir(os.getcwd())
-	for item in curDirList:
-		fileStat = os.stat(item)
-		if stat.S_ISDIR(fileStat.st_mode):
-			print('{}: {}'.format(item,fileStat.st_mode))
-
-
 ''' Callback function with closure for retrlines call that finds directories and appends them to the passed list '''
 def mlsdFilter(localList):
 	def findDir(fileInfo):
@@ -238,7 +225,6 @@ def main():
 	parser.add_option('-q','--quiet',action='store_true', default=False, help='Silences output')
 	parser.add_option('-t','--testrun', action='store_true', default=False, 
 					  help="Same as a normal run, except files aren't acutually changed.  A detailed log of operations is printed to stdout")
-	parser.add_option('-D','--debug', action='store_true', help='For debugging')
 	#parser.add_option('-d','--debug', action='store_true', default=False, 
 	#				  help='Turns on debugging (WARNING: This will log private information, such as usernames)')
 	#parser.add_option('-A','--auto', action='store_true', 
