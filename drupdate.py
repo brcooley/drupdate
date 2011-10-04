@@ -50,7 +50,7 @@ ftpConn = None
 verbose = True
 testrun = False
 i = j = 0
-dirList = []
+configDict = {}
 
 
 '''  Collects host, username, password, and optional account information  '''
@@ -96,12 +96,24 @@ def deleteDir(rootDir):
 	if testrun:
 		global i
 		i += 1
+	curDirList = []
 	ftpConn.cwd(rootDir)
 	fList = ftpConn.nlst()
-	for f in fList:
-		if re.search(r'.*\..+',f) and f != '..':
+	fList.remove('.')
+	fList.remove('..')
+	if configDict['MLSDSupport']:
+		dirFilter = mlsdFilter(curDirList)
+		ftpConn.retrlines('MLSD',dirFilter)
+	else:
+		dirFilter = listFilter(curDirList)
+		ftpConn.retrlines('LIST',dirFilter)
+
+	for item in fList:
+		if item in curDirList:
+			deleteDir(item)
+		else:
 			if testrun == False:
-				ftpConn.delete(f)
+				ftpConn.delete(item)
 				if j % 4 == 3:
 					sprint('\b\b| ', end='')
 				elif j % 4 == 2:
@@ -114,9 +126,7 @@ def deleteDir(rootDir):
 				sys.stdout.flush()
 			else:
 				sprint('-'*i,end='')
-				sprint('Deleting {}'.format(f))
-		elif f != '..' and f != '.':
-			deleteDir(f)
+				sprint('Deleting {}'.format(item))
 		
 	ftpConn.cwd('..')
 	if testrun == False:
@@ -139,13 +149,16 @@ def uploadDir(rootDir):
 	else:
 		ftpConn.mkd(rootDir)
 		ftpConn.cwd(rootDir)
+
 	os.chdir(rootDir)
 	fList = os.listdir(os.getcwd())
-	for f in fList:
-		if re.search(r'.*\..+',f) and f != '..':
+	for item in fList:
+		if stat.S_ISDIR(os.stat(item)):
+			uploadDir(item)
+		else:
 			if testrun == False:
-				openF = open(f,'rb') #TODO need a try/except here
-				ftpConn.storbinary('STOR {}'.format(f),openF)
+				openF = open(item,'rb') #TODO need a try/except here
+				ftpConn.storbinary('STOR {}'.format(item),openF)
 				if j % 4 == 3:
 					sprint('\b\b| ', end='')
 				elif j % 4 == 2:
@@ -158,9 +171,7 @@ def uploadDir(rootDir):
 				sys.stdout.flush()
 			else:
 				sprint('-'*i,end='')
-				sprint('Uploading {}'.format(f))
-		elif f != '..' and f != '.':
-			uploadDir(f)
+				sprint('Uploading {}'.format(item))
 			
 	ftpConn.cwd('..')
 	os.chdir('..')
@@ -170,9 +181,11 @@ def uploadDir(rootDir):
 
 
 def debugHook(ftpConn):
-	#ftpConn.retrlines('MLSD',mlsdFilter)
+	localList = []
+	dirFilter = listFilter(localList)
+	#ftpConn.retrlines('MLSD',dirFilter)
 	ftpConn.retrlines('LIST',dirFilter)
-	print(dirList)
+	print(localList)
 	curDirList = os.listdir(os.getcwd())
 	for item in curDirList:
 		fileStat = os.stat(item)
@@ -180,23 +193,25 @@ def debugHook(ftpConn):
 			print('{}: {}'.format(item,fileStat.st_mode))
 
 
-''' Callback function for retrlines call that finds directories and appends them to the global dirList '''
-def mlsdFilter(fileInfo):
-	global dirList
-	if re.search(r'type=dir;',fileInfo):
-		dirList.append(fileInfo.split(';')[7].strip())
+''' Callback function with closure for retrlines call that finds directories and appends them to the passed list '''
+def mlsdFilter(localList):
+	def findDir(fileInfo):
+		if re.search(r'type=dir;',fileInfo):
+			localList.append(fileInfo.split(';')[7].strip())
+	return findDir
 
 
-''' Callback function for retrlines call that finds directories and appends them to the global dirList '''
-def dirFilter(fileInfo):
-	global dirList
-	if re.match(r'^d',fileInfo) and fileInfo.split()[8].strip() not in ['.','..']:
-		dirList.append(fileInfo.split()[8].strip())
+''' Callback function with closure for retrlines call that finds directories and appends them to the passed list '''
+def listFilter(localList):
+	def findDir(fileInfo):
+		if re.match(r'^d',fileInfo) and fileInfo.split()[8].strip() not in ['.','..']:
+			localList.append(fileInfo.split()[8].strip())
+	return findDir
 
 
 
 def main():
-	global ftpConn, verbose, testrun
+	global ftpConn, verbose, testrun, configDict
 	#TODO fix logging to respect debug flag
 	log.basicConfig(filename=LOG_FILE,level=log.INFO)
 	log.info('Logging started')
@@ -292,10 +307,14 @@ def main():
 	
 	ftpConn.cwd(configDict['DrupalBaseDir'])
 	log.debug('Current dir: {}'.format(ftpConn.pwd()))
-	curFileList = ftpConn.nlst()
+	curFileList = [x for x in ftpConn.nlst() if x not in ['.','..']]
+
+	dirList = []
 	if configDict['MLSDSupport']:
-		ftpConn.retrlines('MLSD',mlsdFilter)
+		dirFilter = mlsdFilter(dirList)
+		ftpConn.retrlines('MLSD',dirFilter)
 	else:
+		dirFilter = listFilter(dirList)
 		ftpConn.retrlines('LIST',dirFilter)
 	log.debug('Current dir listing:\n{}'.format(curFileList))
 	curWD = ftpConn.pwd()
@@ -310,7 +329,7 @@ def main():
 	###
 	
 	for item in curFileList:
-		if item not in configDict['DirectoriesToSave'] and item not in configDict['FilesToSave'] and item not in ['.','..']:
+		if item not in configDict['DirectoriesToSave'] and item not in configDict['FilesToSave']:
 			if item in dirList:
 				deleteDir(item)
 			else:
@@ -324,14 +343,19 @@ def main():
 	printAndLog("Removal complete, starting upload",log.INFO)
 	###
 
-	os.chdir('drupal-{}.{}'.format(drupalVer[0],drupalVer[1]))
+	try:
+		os.chdir('drupal-{}.{}'.format(drupalVer[0],drupalVer[1]))
+	except OSError:
+		printAndLog("Drupal directory not found, exiting",log.CRITICAL,True,sys.stderr)
+		sys.exit(1)
+
 	
 	### STATUS
 	sprint("Uploading files --   ",end='')
 	###
 	
 	for item in os.listdir(os.getcwd()):
-		if item not in configDict['DirectoriesToSave'] and item not in configDict['FilesToSave'] and item not in ['.','..']:
+		if item not in configDict['DirectoriesToSave'] and item not in configDict['FilesToSave']:
 			if stat.S_ISDIR(os.stat(item)):
 				uploadDir(item) 
 			else:
