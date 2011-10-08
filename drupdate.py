@@ -36,7 +36,7 @@ from subprocess import *
 LOG_FILE = time.strftime('.%Y-%m-%d.log')
 CONFIG_FILE = '.duConfig.conf'
 PROG_TITLE = 'drupdate'
-VERSION = '0.5.1a'
+VERSION = '0.6.1a'
 
 DEF_CONFIG = {
 		'DirectoriesToSave' : '', 
@@ -55,15 +55,6 @@ configDict = {}
 
 '''  Collects host, username, password, and optional account information  '''
 def collectLogin(mainArg, userN='', pw='', acct=''):
-	if '@' in mainArg[0]:
-		upBundle, remoteSvr = mainArg[0].split('@')
-		if ':' in upBundle:
-			userN, pw = upBundle.split(':')
-		else:
-			userN = upBundle
-	else:
-		remoteSvr = mainArg[0]
-
 	log.debug(sys.platform)
 	if sys.platform == 'linux2':
 		try:
@@ -72,6 +63,15 @@ def collectLogin(mainArg, userN='', pw='', acct=''):
 				userN, acct, pw = ftpInfo.authenticators(remoteSvr)
 		except IOError:
 			log.warning('No .netrc file found')
+
+	if '@' in mainArg[0]:
+		upBundle, remoteSvr = mainArg[0].split('@')
+		if ':' in upBundle:
+			userN, pw = upBundle.split(':')
+		else:
+			userN = upBundle
+	else:
+		remoteSvr = mainArg[0]
 		
 	if len(userN) == 0:
 		userN = input('Username at {}: '.format(remoteSvr))
@@ -157,7 +157,10 @@ def uploadDir(rootDir):
 			uploadDir(item)
 		else:
 			if testrun == False:
-				openF = open(item,'rb') #TODO need a try/except here
+				try:
+					openF = open(item,'rb')
+				except IOError:
+					printAndLog("\nCould not open {} to upload, skipping".format(item), log.ERROR, True)
 				ftpConn.storbinary('STOR {}'.format(item),openF)
 				if j % 4 == 3:
 					sprint('\b\b| ', end='')

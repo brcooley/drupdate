@@ -1,4 +1,4 @@
-# drupdate v0.6a#
+# drupdate v0.6.1a #
 
 drupdate is a python script which allows for complete update to a [Drupal](http://www.drupal.org) installation on a remote server.  It can also perform a fresh install of the latest version of Drupal.  It was desiged to be used on shared hosts, where ssh access isn't allowed, but it should work for any setup.
 
@@ -8,14 +8,16 @@ Currently, the source is messy and full of debugging code.  _However_, minimal t
 
 #### Features ####
 
-+ Automatically downloads and unpacks the latest version of Drupal.  Just specify the version number with -V or in the config file.  (Currently, drupdate will attempt to install Drupal 7.8 if no version is specified)
-+ Save any files or directories that reside in your Drupal root.  Just list them in the config file
-+ Testrun to see what files drupdate plans on modifying before actually starting the operation.  Use -t when starting drupdate
+ + Automatically downloads and unpacks the latest version of Drupal.  Just specify the version number with -V or in the config file.  (Currently, drupdate will attempt to install Drupal 7.8 if no version is specified)
+ + Supports `.netrc` files
+ + Save any files or directories that reside in your Drupal root.  Just list them in the config file
+ + Testrun to see what files drupdate plans on modifying before actually starting the operation.  Use -t when starting drupdate
+ + Trying to connect to an old FTP server and having trouble?  Try setting `MLSDSupport` to false in the config file
 
 #### Limitations ####
 
-+ drupdate is designed with simplicity in mind.  Therefore, it does not do all of the recommended steps when updating Drupal, namely putting the site into maintainace mode and backing up the mySQL database.  Please complete these steps manually if they are important to you.
-+ drupdate only uses one FTP connection.  This means it might seem slower than other FTP clients.  However, this also guarentees that drupdate will never open too many connections to your remote server, thus timing out (something other FTP clients _also_ do)
+ + drupdate is designed with simplicity in mind.  Therefore, it does not do all of the recommended steps when updating Drupal, namely putting the site into maintainace mode and backing up the mySQL database.  Please complete these steps manually if they are important to you.
+ + drupdate only uses one FTP connection.  This means it might seem slower than other FTP clients.  However, this also guarentees that drupdate will never open too many connections to your remote server, thus timing out (something other FTP clients _also_ do)
 
 ## Installation ##
 
