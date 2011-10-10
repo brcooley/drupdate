@@ -27,7 +27,7 @@ import logging as log
 	-- CRITICAL: Error causing program abort
 '''
 
-import sys, re, time, ftplib, json, os, shutil, stat
+import sys, re, time, ftplib, json, os, shutil, urllib.request, tarfile
 from getpass import *
 from optparse import *
 from netrc import *
@@ -36,7 +36,7 @@ from subprocess import *
 LOG_FILE = time.strftime('.%Y-%m-%d.log')
 CONFIG_FILE = '.duConfig.conf'
 PROG_TITLE = 'drupdate'
-VERSION = '0.6.1a'
+VERSION = '0.7a'
 
 DEF_CONFIG = {
 		'DirectoriesToSave' : '', 
@@ -153,7 +153,7 @@ def uploadDir(rootDir):
 	os.chdir(rootDir)
 	fList = os.listdir(os.getcwd())
 	for item in fList:
-		if stat.S_ISDIR(os.stat(item)):
+		if os.path.isdir(item):
 			uploadDir(item)
 		else:
 			if testrun == False:
@@ -231,7 +231,7 @@ def main():
 	#parser.add_option('-d','--debug', action='store_true', default=False, 
 	#				  help='Turns on debugging (WARNING: This will log private information, such as usernames)')
 	#parser.add_option('-A','--auto', action='store_true', 
-	#				  help='Tells the updater to automatically find the latest version of Drupal'.format(PROG_TITLE))
+	#				  help='Tells the updater to automatically find the latest version of Drupal')
 	options, reqArgs = parser.parse_args()
 
 	if len(reqArgs) < 1:
@@ -253,16 +253,24 @@ def main():
 	if options.no_get == False:
 		
 		### STATUS
-		printAndLog('Starting download of Drupal {}.{}'.format(drupalVer[0],drupalVer[1]),log.INFO)
+		printAndLog('Starting download of Drupal {0[0]}.{0[1]}'.format(drupalVer),log.INFO)
 		###
 		
-		Popen(['wget','-q','http://drupal.org/files/projects/drupal-{}.{}.tar.gz'.format(drupalVer[0],drupalVer[1])]).wait()
-		
+		#Old code, new code should be platform independent
+		#Popen(['wget','-q','http://drupal.org/files/projects/drupal-{}.{}.tar.gz'.format(drupalVer[0],drupalVer[1])]).wait()
+		downloadInfo = urllib.request.urlretrieve('http://drupal.org/files/projects/drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer),
+												  os.path.join(os.getcwd(),'drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer)))
+
 		### STATUS
 		printAndLog('Download finished, unpacking...',log.INFO)
 		###
 		
-		Popen(['tar','-xzf','drupal-{}.{}.tar.gz'.format(drupalVer[0],drupalVer[1])])
+		#Old code, new code should be platform independent
+		#Popen(['tar','-xzf','drupal-{}.{}.tar.gz'.format(drupalVer[0],drupalVer[1])])
+		tar = tarfile.open('drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer))
+		tar.extractall()
+		tar.close()
+
 	
 	#FUT Attept at platform-independent code, visit again later
 	'''
@@ -307,11 +315,7 @@ def main():
 		ftpConn.retrlines('LIST',dirFilter)
 	log.debug('Current dir listing:\n{}'.format(curFileList))
 	curWD = ftpConn.pwd()
-	#-#
-	if options.debug:
-		debugHook(ftpConn)
-		sys.exit(0)
-	#-#
+
 	### STATUS
 	sprint('Removing files --   ',end='')
 	sys.stdout.flush()
@@ -333,7 +337,7 @@ def main():
 	###
 
 	try:
-		os.chdir('drupal-{}.{}'.format(drupalVer[0],drupalVer[1]))
+		os.chdir('drupal-{0[0]}.{0[1]}'.format(drupalVer))
 	except OSError:
 		printAndLog("Drupal directory not found, exiting",log.CRITICAL,True,sys.stderr)
 		sys.exit(1)
@@ -345,7 +349,7 @@ def main():
 	
 	for item in os.listdir(os.getcwd()):
 		if item not in configDict['DirectoriesToSave'] and item not in configDict['FilesToSave']:
-			if stat.S_ISDIR(os.stat(item)):
+			if os.path.isdir(item):
 				uploadDir(item) 
 			else:
 				if testrun == False:
@@ -357,13 +361,13 @@ def main():
 	sprint('')
 	
 	### STATUS
-	sprint('Drupal successfuly updated to {}.{}'.format(drupalVer[0],drupalVer[1]))
+	sprint('Drupal successfuly updated to {0[0]}.{0[1]}'.format(drupalVer))
 	###
 	
 	if options.keep == False:
 		os.chdir('..')
-		shutil.rmtree('drupal-{}.{}'.format(drupalVer[0],drupalVer[1]),True)
-		os.unlink('drupal-{}.{}.tar.gz'.format(drupalVer[0],drupalVer[1]))
+		shutil.rmtree('drupal-{0[0]}.{0[1]}'.format(drupalVer),True)
+		os.unlink('drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer))
 	
 	try:
 		ftpConn.quit()
