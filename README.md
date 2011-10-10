@@ -2,18 +2,17 @@
 
 drupdate is a python script which allows for complete update to a [Drupal](http://www.drupal.org) installation on a remote server.  It can also perform a fresh install of the latest version of Drupal.  It was desiged to be used on shared hosts, where ssh access isn't allowed, but it should work for any setup.
 
-## Status ##
-
-drupdate now supports Windows and OS X!
-
-Currently, the source is messy and full of debugging code.  _However_, minimal testing has been done, and multiple sites have been sucessfully updated.  Use at your own risk, and I would recommend running on a test server before you touch your production site.
-
-
 ## Quick Start ##
 
     git clone http://github.com/brcooley/drupdate.git drupdate
     cd drupdate
     python3 drupdate.py [user:pw@]host.com
+
+## Status ##
+
+drupdate now supports Windows and OS X!
+
+Currently, the source is messy and full of debugging code.  _However_, minimal testing has been done, and multiple sites have been sucessfully updated.  Use at your own risk, and I would recommend running on a test server before you touch your production site.
 
 #### Features ####
 
