@@ -22,8 +22,8 @@ import logging as log
 	Logging level definitions:
 	-- DEBUG: Debugging and system information/user input
 	-- INFO: Status, ftp command info
-	-- WARNING: Error which does not impeed functionality
-	-- ERROR: Major failure which allows program to run, but impeeds functionality
+	-- WARNING: Error which does not impede functionality
+	-- ERROR: Major failure which allows program to run, but impedes functionality
 	-- CRITICAL: Error causing program abort
 '''
 
@@ -53,8 +53,8 @@ i = j = 0
 configDict = {}
 
 
-'''  Collects host, username, password, and optional account information  '''
 def collectLogin(mainArg, userN='', pw='', acct=''):
+	''' Collects host, username, password, and optional account information. '''
 	log.debug(sys.platform)
 	if sys.platform == 'linux2':
 		try:
@@ -90,8 +90,8 @@ def collectLogin(mainArg, userN='', pw='', acct=''):
 	return (remoteSvr.strip(), userN.strip(), pw.strip(), acct.strip())
 
 
-'''  Recursive function which deletes entire directory trees  '''
 def deleteDir(rootDir):
+	''' Recursive function which deletes entire directory trees. '''
 	global ftpConn, j, testrun
 	if testrun:
 		global i
@@ -138,8 +138,8 @@ def deleteDir(rootDir):
 	return
 
 
-'''  Recursive function which uploads entire directory trees  '''
 def uploadDir(rootDir):
+	''' Recursive function which uploads entire directory trees. '''
 	global ftpConn, j, testrun
 	if testrun:
 		global i
@@ -183,16 +183,16 @@ def uploadDir(rootDir):
 	return
 
 
-''' Callback function with closure for retrlines call that finds directories and appends them to the passed list '''
 def mlsdFilter(localList):
+	''' Callback function with closure for retrlines call that finds directories and appends them to the passed list. '''
 	def findDir(fileInfo):
 		if re.search(r'type=dir;',fileInfo):
 			localList.append(fileInfo.split(';')[7].strip())
 	return findDir
 
 
-''' Callback function with closure for retrlines call that finds directories and appends them to the passed list '''
 def listFilter(localList):
+	''' Callback function with closure for retrlines call that finds directories and appends them to the passed list. '''
 	def findDir(fileInfo):
 		if re.match(r'^d',fileInfo) and fileInfo.split()[8].strip() not in ['.','..']:
 			localList.append(fileInfo.split()[8].strip())
@@ -216,7 +216,7 @@ def main():
 			printAndLog('Unconfigured script aborted by user, {} exiting'.format(PROG_TITLE),log.INFO,True)
 			sys.exit(4)
 	
-	''' Options --account, -A, currently do not work  '''
+	''' Option -A currently does not work  '''
 	parser = OptionParser(description=DESC, prog=PROG_TITLE, version='{} version {}'.format(PROG_TITLE, VERSION), 
 						  usage='drupalUpdate.py [options] host')
 	parser.add_option('-v','--ver', help="Specify the version of drupal to get, like 'X.y'", metavar='VER')
@@ -227,7 +227,7 @@ def main():
 	parser.add_option('-n','--no-get',action='store_true', default=False, help='Stops the script from downloading and unpacking Drupal')
 	parser.add_option('-q','--quiet',action='store_true', default=False, help='Silences output')
 	parser.add_option('-t','--testrun', action='store_true', default=False, 
-					  help="Same as a normal run, except files aren't acutually changed.  A detailed log of operations is printed to stdout")
+					  help="Same as a normal run, except files aren't actually changed.  A detailed log of operations is printed to stdout")
 	#parser.add_option('-d','--debug', action='store_true', default=False, 
 	#				  help='Turns on debugging (WARNING: This will log private information, such as usernames)')
 	#parser.add_option('-A','--auto', action='store_true', 
@@ -256,31 +256,17 @@ def main():
 		printAndLog('Starting download of Drupal {0[0]}.{0[1]}'.format(drupalVer),log.INFO)
 		###
 		
-		#Old code, new code should be platform independent
-		#Popen(['wget','-q','http://drupal.org/files/projects/drupal-{}.{}.tar.gz'.format(drupalVer[0],drupalVer[1])]).wait()
-		downloadInfo = urllib.request.urlretrieve('http://drupal.org/files/projects/drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer),
-												  os.path.join(os.getcwd(),'drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer)))
+		downloadInfo = urllib.request.urlretrieve(
+						'http://drupal.org/files/projects/drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer),
+						os.path.join(os.getcwd(),'drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer)))
 
 		### STATUS
 		printAndLog('Download finished, unpacking...',log.INFO)
 		###
 		
-		#Old code, new code should be platform independent
-		#Popen(['tar','-xzf','drupal-{}.{}.tar.gz'.format(drupalVer[0],drupalVer[1])])
 		tar = tarfile.open('drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer))
 		tar.extractall()
 		tar.close()
-
-	
-	#FUT Attept at platform-independent code, visit again later
-	'''
-	drupalTarDownload = urllib.request.urlopen('http://drupal.org/files/projects/drupal-{}.{}.tar.gz'.format(7,8))
-	drupalTarFile = open('drupal-{}.{}.tar.gz'.format(7,8),'w+b')
-	print(type(drupalTarDownload.read()))
-	#print(drupalTarDownload.read(),file=drupalTarFile)
-	drupalTarFile.write(drupalTarDownload.read())
-	drupalTarFile.close()
-	'''
 	
 	passUser = passPass = passAcct = ''
 	
@@ -361,7 +347,7 @@ def main():
 	sprint('')
 	
 	### STATUS
-	sprint('Drupal successfuly updated to {0[0]}.{0[1]}'.format(drupalVer))
+	sprint('Drupal successfully updated to {0[0]}.{0[1]}'.format(drupalVer))
 	###
 	
 	if options.keep == False:
@@ -377,14 +363,15 @@ def main():
 	log.shutdown()
 
 
-'''  A simple method which prints and logs the same message  '''
 def printAndLog(message, level=log.DEBUG, verbOverride=False, printStream=sys.stdout):
+	''' A simple method which prints and logs the same message. '''
 	log.log(level, message)
 	if verbose or verbOverride:
 		print(message, file=printStream)
 
-''' Simple wrapper to print method that respects verbose option  '''
+
 def sprint(message,sep=' ',end='\n',file=sys.stdout):
+	''' Simple wrapper to print method that respects verbose option. '''
 	if verbose:
 		print(message,sep=sep,end=end,file=file)
 
