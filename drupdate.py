@@ -36,7 +36,7 @@ from subprocess import *
 LOG_FILE = time.strftime('.%Y-%m-%d.log')
 CONFIG_FILE = '.duConfig.conf'
 PROG_TITLE = 'drupdate'
-VERSION = '0.7a'
+VERSION = '0.7.2a'
 
 DEF_CONFIG = {
 		'DirectoriesToSave' : '', 
@@ -199,12 +199,29 @@ def listFilter(localList):
 	return findDir
 
 
+def cleanLogs(save):
+	''' Removes old log files if there are more than 10 in the current directory. '''
+	fileList = os.listdir(os.getcwd())
+	logFiles = [x for x in fileList if re.match(r'^\..*\.log$',x) and x != LOG_FILE]
+	if len(logFiles) > 9:
+		if save:
+			if not os.path.isdir('.logs'):
+				os.mkdir('.logs')
+			for logFile in logFiles:
+				if os.path.isfile(os.path.join('.logs',logFile)):
+					os.unlink(os.path.join('.logs',logFile))
+				os.rename(logFile,os.path.join('.logs',logFile))
+		else:
+			for logFile in logFiles:
+				os.unlink(logFile)
+
 
 def main():
 	global ftpConn, verbose, testrun, configDict
 	#TODO fix logging to respect debug flag
+
 	log.basicConfig(filename=LOG_FILE,level=log.INFO)
-	log.info('Logging started')
+	log.info('---\nLogging started')
 	try:
 		configDict = json.load(open(CONFIG_FILE,'r'))
 		log.info('Config file loaded')
@@ -226,6 +243,8 @@ def main():
 	parser.add_option('-k','--keep', action='store_true', default=False, help='Keeps both the local Drupal directory and the .tar')
 	parser.add_option('-n','--no-get',action='store_true', default=False, help='Stops the script from downloading and unpacking Drupal')
 	parser.add_option('-q','--quiet',action='store_true', default=False, help='Silences output')
+	parser.add_option('-s','--save-logs',action='store_true', default=False, 
+						help='Tells drupdate move old logs to the .log folder instead of deleting them')
 	parser.add_option('-t','--testrun', action='store_true', default=False, 
 					  help="Same as a normal run, except files aren't actually changed.  A detailed log of operations is printed to stdout")
 	#parser.add_option('-d','--debug', action='store_true', default=False, 
@@ -361,6 +380,7 @@ def main():
 		ftpConn.close()
 	log.info('Connection to {} closed'.format(remoteSvr))
 	log.shutdown()
+	cleanLogs(options.save_logs)
 
 
 def printAndLog(message, level=log.DEBUG, verbOverride=False, printStream=sys.stdout):
@@ -374,6 +394,8 @@ def sprint(message,sep=' ',end='\n',file=sys.stdout):
 	''' Simple wrapper to print method that respects verbose option. '''
 	if verbose:
 		print(message,sep=sep,end=end,file=file)
+
+
 
 DESC = '''
     A simple python script which automatically removes and replaces a 'typical' Drupal install on a
