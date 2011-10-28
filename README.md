@@ -1,4 +1,4 @@
-# drupdate v0.7.2a #
+# drupdate v0.7.3a #
 
 drupdate is a python script which allows for complete update to a [Drupal](http://www.drupal.org) installation on a remote server.  It can also perform a fresh install of the latest version of Drupal.  It was desiged to be used on shared hosts, where ssh access isn't allowed, but it should work for any setup.
 
@@ -16,7 +16,7 @@ Currently, the source is messy and full of debugging code.  _However_, minimal t
 
 #### Features ####
 
- + Automatically downloads and unpacks the latest version of Drupal.  Just specify the version number with -V or in the config file.  (Currently, drupdate will attempt to install Drupal 7.8 if no version is specified)
+ + Automatically downloads and unpacks the latest version of Drupal.  Just specify the version number with -V or in the config file.  (Currently, drupdate will attempt to install Drupal 7.9 if no version is specified)
  + Supports `.netrc` files
  + Save any files or directories that reside in your Drupal root.  Just list them in the config file
  + Testrun to see what files drupdate plans on modifying before actually starting the operation.  Use -t when starting drupdate

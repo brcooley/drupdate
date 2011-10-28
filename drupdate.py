@@ -42,7 +42,7 @@ DEF_CONFIG = {
 		'DirectoriesToSave' : '', 
 		'FilesToSave' 		: '', 
 		'DrupalBaseDir' 	: 'public_html',
-		'DrupalVersion' 	: '7.8',
+		'DrupalVersion' 	: '7.9',
 		'MLSDSupport'		: 'True'
 	}
 
@@ -235,7 +235,7 @@ def main():
 	
 	''' Option -A currently does not work  '''
 	parser = OptionParser(description=DESC, prog=PROG_TITLE, version='{} version {}'.format(PROG_TITLE, VERSION), 
-						  usage='drupalUpdate.py [options] host')
+						  usage='drupupdate.py [options] host')
 	parser.add_option('-v','--ver', help="Specify the version of drupal to get, like 'X.y'", metavar='VER')
 	parser.add_option('-u','--user', help='Specify a username to login to a host with')
 	parser.add_option('-p','--password', help='Password to use with login', metavar='PASS')
