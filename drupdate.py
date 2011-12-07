@@ -27,7 +27,15 @@ import logging as log
 	-- CRITICAL: Error causing program abort
 '''
 
-import sys, re, time, ftplib, json, os, shutil, urllib.request, tarfile
+import sys
+import re
+import time
+import ftplib
+import json
+import os
+import shutil
+import urllib.request
+import tarfile
 from getpass import *
 from optparse import *
 from netrc import *
@@ -39,10 +47,10 @@ PROG_TITLE = 'drupdate'
 VERSION = '0.7.2a'
 
 DEF_CONFIG = {
-		'DirectoriesToSave' : '', 
-		'FilesToSave' 		: '', 
+		'DirectoriesToSave' : '',
+		'FilesToSave' 		: '',
 		'DrupalBaseDir' 	: 'public_html',
-		'DrupalVersion' 	: '7.9',
+		'DrupalVersion' 	: '7.10',
 		'MLSDSupport'		: 'True'
 	}
 
@@ -72,10 +80,10 @@ def collectLogin(mainArg, userN='', pw='', acct=''):
 			userN = upBundle
 	else:
 		remoteSvr = mainArg[0]
-		
+
 	if len(userN) == 0:
 		userN = input('Username at {}: '.format(remoteSvr))
-		
+
 	if len(pw) == 0:
 		try:
 			pw = getpass()
@@ -84,7 +92,7 @@ def collectLogin(mainArg, userN='', pw='', acct=''):
 			if input("WARNING! Password may be echoed, press 'y' to continue anyways: ").upper() == 'Y':
 				pw = getpass()
 			else:
-				printAndLog('Echoed password input aborted by user, {} exiting'.format(PROG_TITLE),log.INFO,True)
+				printAndLog('Echoed password input aborted by user, {} exiting'.format(PROG_TITLE), log.INFO, True)
 				sys.exit(3)
 	log.debug(userN)
 	return (remoteSvr.strip(), userN.strip(), pw.strip(), acct.strip())
@@ -103,10 +111,10 @@ def deleteDir(rootDir):
 	fList.remove('..')
 	if configDict['MLSDSupport']:
 		dirFilter = mlsdFilter(curDirList)
-		ftpConn.retrlines('MLSD',dirFilter)
+		ftpConn.retrlines('MLSD', dirFilter)
 	else:
 		dirFilter = listFilter(curDirList)
-		ftpConn.retrlines('LIST',dirFilter)
+		ftpConn.retrlines('LIST', dirFilter)
 
 	for item in fList:
 		if item in curDirList:
@@ -127,14 +135,14 @@ def deleteDir(rootDir):
 			else:
 				sprint('-'*i,end='')
 				sprint('Deleting {}'.format(item))
-		
+
 	ftpConn.cwd('..')
 	if testrun == False:
 		ftpConn.rmd(rootDir)
 	else:
 		sprint('='*i,end='')
 		sprint('Removing {}'.format(rootDir))
-		i -= 1	
+		i -= 1
 	return
 
 
@@ -175,7 +183,7 @@ def uploadDir(rootDir):
 			else:
 				sprint('-'*i,end='')
 				sprint('Uploading {}'.format(item))
-			
+
 	ftpConn.cwd('..')
 	os.chdir('..')
 	if testrun:
@@ -232,10 +240,10 @@ def main():
 		else:
 			printAndLog('Unconfigured script aborted by user, {} exiting'.format(PROG_TITLE),log.INFO,True)
 			sys.exit(4)
-	
+
 	''' Option -A currently does not work  '''
-	parser = OptionParser(description=DESC, prog=PROG_TITLE, version='{} version {}'.format(PROG_TITLE, VERSION), 
-						  usage='drupupdate.py [options] host')
+	parser = OptionParser(description=DESC, prog=PROG_TITLE, version='{} version {}'.format(PROG_TITLE, VERSION),
+						usage='drupupdate.py [options] host')
 	parser.add_option('-v','--ver', help="Specify the version of drupal to get, like 'X.y'", metavar='VER')
 	parser.add_option('-u','--user', help='Specify a username to login to a host with')
 	parser.add_option('-p','--password', help='Password to use with login', metavar='PASS')
@@ -243,13 +251,13 @@ def main():
 	parser.add_option('-k','--keep', action='store_true', default=False, help='Keeps both the local Drupal directory and the .tar')
 	parser.add_option('-n','--no-get',action='store_true', default=False, help='Stops the script from downloading and unpacking Drupal')
 	parser.add_option('-q','--quiet',action='store_true', default=False, help='Silences output')
-	parser.add_option('-s','--save-logs',action='store_true', default=False, 
+	parser.add_option('-s','--save-logs',action='store_true', default=False,
 						help='Tells drupdate move old logs to the .log folder instead of deleting them')
-	parser.add_option('-t','--testrun', action='store_true', default=False, 
-					  help="Same as a normal run, except files aren't actually changed.  A detailed log of operations is printed to stdout")
-	#parser.add_option('-d','--debug', action='store_true', default=False, 
+	parser.add_option('-t','--testrun', action='store_true', default=False,
+					help="Same as a normal run, except files aren't actually changed.  A detailed log of operations is printed to stdout")
+	#parser.add_option('-d','--debug', action='store_true', default=False,
 	#				  help='Turns on debugging (WARNING: This will log private information, such as usernames)')
-	#parser.add_option('-A','--auto', action='store_true', 
+	#parser.add_option('-A','--auto', action='store_true',
 	#				  help='Tells the updater to automatically find the latest version of Drupal')
 	options, reqArgs = parser.parse_args()
 
@@ -268,13 +276,13 @@ def main():
 		drupalVer = options.ver.split('.')
 	else:
 		drupalVer = configDict['DrupalVersion'].split('.')
-	
+
 	if options.no_get == False:
-		
+
 		### STATUS
 		printAndLog('Starting download of Drupal {0[0]}.{0[1]}'.format(drupalVer),log.INFO)
 		###
-		
+
 		downloadInfo = urllib.request.urlretrieve(
 						'http://drupal.org/files/projects/drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer),
 						os.path.join(os.getcwd(),'drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer)))
@@ -282,20 +290,20 @@ def main():
 		### STATUS
 		printAndLog('Download finished, unpacking...',log.INFO)
 		###
-		
+
 		tar = tarfile.open('drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer))
 		tar.extractall()
 		tar.close()
-	
+
 	passUser = passPass = passAcct = ''
-	
+
 	if options.user != None:
 		passUser = options.user
 	if options.password != None:
 		passPass = options.password
 	if options.account != None:
 		passAcct = options.account
-	
+
 	remoteSvr, userN, pw, acct = collectLogin(reqArgs,passUser,passPass,passAcct)
 
 	ftpConn = ftplib.FTP()
@@ -303,10 +311,10 @@ def main():
 		ftpConn.connect(remoteSvr)
 		log.info('Connection made to {}'.format(remoteSvr))
 		ftpConn.login(userN,pw,acct)
-	except ftplib.all_errors:		#TODO break out, create fixes for each error
+	except ftplib.all_errors:		# TODO break out, create fixes for each error
 		printAndLog('Something went wrong...',log.CRITICAL,True,sys.stderr)
 		sys.exit(1)
-	
+
 	ftpConn.cwd(configDict['DrupalBaseDir'])
 	log.debug('Current dir: {}'.format(ftpConn.pwd()))
 	curFileList = [x for x in ftpConn.nlst() if x not in ['.','..']]
@@ -325,7 +333,7 @@ def main():
 	sprint('Removing files --   ',end='')
 	sys.stdout.flush()
 	###
-	
+
 	for item in curFileList:
 		if item not in configDict['DirectoriesToSave'] and item not in configDict['FilesToSave']:
 			if item in dirList:
@@ -336,7 +344,7 @@ def main():
 				else:
 					sprint('Deleting {}'.format(item))
 	sprint('')
-	
+
 	### STATUS
 	printAndLog("Removal complete, starting upload",log.INFO)
 	###
@@ -347,15 +355,14 @@ def main():
 		printAndLog("Drupal directory not found, exiting",log.CRITICAL,True,sys.stderr)
 		sys.exit(1)
 
-	
 	### STATUS
 	sprint("Uploading files --   ",end='')
 	###
-	
+
 	for item in os.listdir(os.getcwd()):
 		if item not in configDict['DirectoriesToSave'] and item not in configDict['FilesToSave']:
 			if os.path.isdir(item):
-				uploadDir(item) 
+				uploadDir(item)
 			else:
 				if testrun == False:
 					openF = open(item,'rb')
@@ -364,16 +371,16 @@ def main():
 				else:
 					sprint('Uploading {}'.format(item))
 	sprint('')
-	
+
 	### STATUS
 	sprint('Drupal successfully updated to {0[0]}.{0[1]}'.format(drupalVer))
 	###
-	
+
 	if options.keep == False:
 		os.chdir('..')
 		shutil.rmtree('drupal-{0[0]}.{0[1]}'.format(drupalVer),True)
 		os.unlink('drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer))
-	
+
 	try:
 		ftpConn.quit()
 	except ftplib.all_errors:
@@ -396,9 +403,8 @@ def sprint(message,sep=' ',end='\n',file=sys.stdout):
 		print(message,sep=sep,end=end,file=file)
 
 
-
 DESC = '''
-    A simple python script which automatically removes and replaces a 'typical' Drupal install on a
+	A simple python script which automatically removes and replaces a 'typical' Drupal install on a
 remote FTP server.  Only tested on Drupal 7.x installs, use with care
 '''
 

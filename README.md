@@ -16,7 +16,7 @@ Currently, the source is messy and full of debugging code.  _However_, minimal t
 
 #### Features ####
 
- + Automatically downloads and unpacks the latest version of Drupal.  Just specify the version number with -V or in the config file.  (Currently, drupdate will attempt to install Drupal 7.9 if no version is specified)
+ + Automatically downloads and unpacks the latest version of Drupal.  Just specify the version number with -V or in the config file.  (Currently, drupdate will attempt to install Drupal 7.10 if no version is specified)
  + Supports `.netrc` files
  + Save any files or directories that reside in your Drupal root.  Just list them in the config file
  + Testrun to see what files drupdate plans on modifying before actually starting the operation.  Use -t when starting drupdate
