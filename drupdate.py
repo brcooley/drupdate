@@ -42,9 +42,9 @@ from netrc import *
 from subprocess import *
 
 LOG_FILE = time.strftime('.%Y-%m-%d.log')
-CONFIG_FILE = '.duConfig.conf'
+CONFIG_FILE = '.drupdate.conf'
 PROG_TITLE = 'drupdate'
-VERSION = '0.7.2a'
+VERSION = '0.7.4a'
 
 DEF_CONFIG = {
 		'DirectoriesToSave' : '',
