@@ -327,7 +327,6 @@ def main():
 		dirFilter = listFilter(dirList)
 		ftpConn.retrlines('LIST',dirFilter)
 	log.debug('Current dir listing:\n{}'.format(curFileList))
-	curWD = ftpConn.pwd()
 
 	### STATUS
 	sprint('Removing files --   ',end='')
@@ -379,7 +378,10 @@ def main():
 	if options.keep == False:
 		os.chdir('..')
 		shutil.rmtree('drupal-{0[0]}.{0[1]}'.format(drupalVer),True)
-		os.unlink('drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer))
+		try:
+			os.unlink('drupal-{0[0]}.{0[1]}.tar.gz'.format(drupalVer))
+		except OSError:  # Allows for those who have already disposed of their tarball
+			pass
 
 	try:
 		ftpConn.quit()
