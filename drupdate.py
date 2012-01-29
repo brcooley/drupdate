@@ -243,18 +243,20 @@ def main():
 
 	''' Option -A currently does not work  '''
 	parser = OptionParser(description=DESC, prog=PROG_TITLE, version='{} version {}'.format(PROG_TITLE, VERSION),
-						usage='drupupdate.py [options] host')
+						usage='drupupdate.py [options] [user:pw@]host')
 	parser.add_option('-v','--ver', help="Specify the version of drupal to get, like 'X.y'", metavar='VER')
 	parser.add_option('-u','--user', help='Specify a username to login to a host with')
 	parser.add_option('-p','--password', help='Password to use with login', metavar='PASS')
 	parser.add_option('--account', help='Specify an account to use with login', metavar='ACCT')
 	parser.add_option('-k','--keep', action='store_true', default=False, help='Keeps both the local Drupal directory and the .tar')
-	parser.add_option('-n','--no-get',action='store_true', default=False, help='Stops the script from downloading and unpacking Drupal')
+	parser.add_option('-n','--no-get',action='store_true', default=False,
+						help='Stops the script from downloading and unpacking Drupal')
 	parser.add_option('-q','--quiet',action='store_true', default=False, help='Silences output')
 	parser.add_option('-s','--save-logs',action='store_true', default=False,
-						help='Tells drupdate move old logs to the .log folder instead of deleting them')
-	parser.add_option('-t','--testrun', action='store_true', default=False,
-					help="Same as a normal run, except files aren't actually changed.  A detailed log of operations is printed to stdout")
+						help='Tells drupdate to move old logs to a .log folder instead of deleting them')
+	parser.add_option('-t','--testrun', action='store_true', default=False, help=
+					'''Same as a normal run, except files aren't actually changed. A detailed log of operations
+						is printed to stdout''')
 	#parser.add_option('-d','--debug', action='store_true', default=False,
 	#				  help='Turns on debugging (WARNING: This will log private information, such as usernames)')
 	#parser.add_option('-A','--auto', action='store_true',
