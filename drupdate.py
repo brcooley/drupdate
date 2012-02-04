@@ -50,7 +50,7 @@ DEF_CONFIG = {
 		'DirectoriesToSave' : '',
 		'FilesToSave' 		: '',
 		'DrupalBaseDir' 	: 'public_html',
-		'DrupalVersion' 	: '7.10',
+		'DrupalVersion' 	: '7.12',
 		'MLSDSupport'		: 'True'
 	}
 
