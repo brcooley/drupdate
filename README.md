@@ -10,6 +10,8 @@ drupdate is a python script which allows for complete update to a [Drupal](http:
 
 ## Status ##
 
+*drupdate is no longer being supported* (mainly because my use for it has expired).  It should continue to work as long as the version of Drupal is configured to the latest (see below for direction).  The core FTP code is being reused however for a CLI FTP library, which will be posted on github soon.
+
 drupdate now supports Windows and OS X!
 
 Currently, the source is messy and full of debugging code.  _However_, minimal testing has been done, and multiple sites have been sucessfully updated.  Use at your own risk, and I would recommend running on a test server before you touch your production site.
@@ -29,7 +31,7 @@ Currently, the source is messy and full of debugging code.  _However_, minimal t
 
 ## Installation ##
 
-Simply download the drupdate.py file along with .duConfig.conf and run it (Python 3.1.x or greater).  Drupdate should support Windows, OS X, and Linux assuming you have a full python installation.
+Simply download the drupdate.py file along with .drupdate.conf and run it (Python 3.1.x or greater).  Drupdate should support Windows, OS X, and Linux assuming you have a full python installation.
 
 ## Planned Features ##
 
